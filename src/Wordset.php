@@ -10,12 +10,12 @@ interface Wordset
      * This is a human-readable string, and should be capitalized
      * if the language supports it.
      */
-    static public function name() : string;
+    public static function name() : string;
 
     /* Returns name of wordset in english.
      * This is a human-readable string, and should be capitalized
      */
-    static public function english_name() : string;
+    public static function english_name() : string;
 
     /* Returns integer indicating length of unique prefix,
      * such that each prefix of this length is unique across
@@ -24,9 +24,9 @@ interface Wordset
      * A value of 0 indicates that there is no unique prefix
      * and the entire word must be used instead.
      */
-    static public function prefix_length() : int;
+    public static function prefix_length() : int;
 
     /* Returns an array of all words in the wordset.
      */
-    static public function words() : array;
+    public static function words() : array;
 }

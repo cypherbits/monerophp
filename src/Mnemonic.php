@@ -34,7 +34,7 @@ namespace MoneroIntegrations\MoneroPhp;
  * All access to this class is via static methods, so it never needs to
  * be instantiated.
  */
-class mnemonic {
+class Mnemonic {
 
     /**
      * Given a mnemonic seed word list, return a string of the seed checksum.
