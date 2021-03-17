@@ -31,7 +31,7 @@ namespace MoneroIntegrations\MoneroPhp;
         public function __construct()
         {
             $this->ed25519 = new ed25519();
-            $this->base58 = new base58();
+            $this->base58 = new Base58();
             $this->varint = new Varint();
         }
 

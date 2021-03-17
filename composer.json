@@ -4,7 +4,7 @@
     "keywords": ["Monero", "XMR", "monerod", "monero-wallet-rpc", "cryptonote", "JSONRPC", "JSON-RPC", "cryptocurrency"],
     "homepage": "https://github.com/monero-integrations/monerophp",
     "type": "library",
-    "version" : "1.0.1",
+    "version" : "2.0.0",
     "license": "MIT",
     "authors": [
         {
@@ -18,13 +18,16 @@
         {
             "name": "sneurlax",
             "email": "sneurlax@gmail.com"
+        },
+        {
+            "name": "cypherbits",
+            "email": "info@avanix.es"
         }
     ],
     "require": {
-        "php": ">=7.2.0",
+        "php": ">=8.0.0",
         "ext-bcmath": "*",
-        "ext-curl": "*",
-        "ext-json": "*"
+        "ext-curl": "*"
     },
     "suggest": {
         "ext-gmp": "Used to have a multiple math precision for generating address"
