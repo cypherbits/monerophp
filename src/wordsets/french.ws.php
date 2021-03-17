@@ -1,10 +1,12 @@
 <?php
 
-namespace MoneroIntegrations\MoneroPhp\mnemonic;
+namespace MoneroIntegrations\MoneroPhp\wordsets;
 
-class french implements wordset {
+use MoneroIntegrations\MoneroPhp\Wordset;
 
-    /* Returns name of wordset in the wordset's native language.
+class french implements Wordset {
+
+    /* Returns name of Wordset in the Wordset's native language.
      * This is a human-readable string, and should be capitalized
      * if the language supports it.
      */
@@ -12,7 +14,7 @@ class french implements wordset {
         return "Français";        
     }
 
-    /* Returns name of wordset in english.    
+    /* Returns name of Wordset in english.
      * This is a human-readable string, and should be capitalized
      */
     static public function english_name() : string {
@@ -27,10 +29,10 @@ class french implements wordset {
      * and the entire word must be used instead.
      */    
     static public function prefix_length() : int {
-        return 4;  // first 4 letters of each word in wordset is unique.
+        return 4;  // first 4 letters of each word in Wordset is unique.
     }
     
-    /* Returns an array of all words in the wordset.
+    /* Returns an array of all words in the Wordset.
      */    
     static public function words() : array {
         return [
