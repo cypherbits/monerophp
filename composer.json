@@ -27,7 +27,9 @@
     "require": {
         "php": ">=8.0.0",
         "ext-bcmath": "*",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "ext-mbstring": "*",
+        "ext-gmp": "*"
     },
     "suggest": {
         "ext-gmp": "Used to have a multiple math precision for generating address"

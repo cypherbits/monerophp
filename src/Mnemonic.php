@@ -38,55 +38,72 @@ class Mnemonic {
 
     /**
      * Given a mnemonic seed word list, return a string of the seed checksum.
+     * @param array $words
+     * @param int $prefix_len
+     * @return mixed
      */
-    static function checksum($words, $prefix_len) {
-        $plen = $prefix_len;
-        $words = array_slice($words, null, count($words) > 13 ? 24 : 12);
+    public static function checksum(array $words, int $prefix_len) : array{
+        $words_size = count($words);
+        $words = array_slice($words, null, $words_size > 13 ? 24 : 12);
         
         $wstr = '';
         foreach($words as $word) {
-            $wstr .= ($plen == 0 ? $word : mb_substr($word, 0, $plen));
+            $wstr .= ($prefix_len === 0 ? $word : mb_substr($word, 0, $prefix_len));
         }
 
         $checksum = crc32($wstr);
-        $idx = $checksum % count($words);
+        $idx = $checksum % $words_size;
         return $words[$idx];
     }
-    
+
     /**
      * Given a mnemonic seed word list, check if checksum word is valid.
      * Returns boolean value.
+     * @param array $words
+     * @param $prefix_len
+     * @return bool
      */
-    static function validate_checksum($words, $prefix_len) {
-        return (self::checksum($words, $prefix_len) == $words[count($words)-1]) ? true : false;
+    //TODO: see if this does what we want... we are not validating anything??
+    public static function validate_checksum(array $words, int $prefix_len): bool
+    {
+        return self::checksum($words, $prefix_len) === $words[count($words)-1];
     }
 
     /**
      * Given an 8 byte word (or shorter),
      * pads to 8 bytes (adds 0 at left) and reverses endian byte order.
+     * @param $word
+     * @return string
      */
-    static function swap_endian($word) {
+    public static function swap_endian(string $word):string {
         $word = str_pad ( $word, 8, 0, STR_PAD_LEFT);
         return implode('', array_reverse(str_split($word, 2)));
     }
-    
+
     /**
      * Given a hexadecimal key string (seed),
      * return it's mnemonic representation.
      *
+     * @param $seed
+     * @param null $wordset_name
+     * @return array
+     * @throws \Exception
      * @todo if anyone can make this work reliably with
      * pure PHP math (no gmp or bcmath), please submit a
      * pull request.
      */
-    static function encode($seed, $wordset_name = null) {
-        assert(mb_strlen($seed) % 8 == 0);
+    //TODO: review this too
+    public static function encode($seed, $wordset_name = null): array
+    {
+        $seed_size = mb_strlen($seed);
+        assert($seed_size % 8 === 0);
         $out = [];
         
         $wordset = self::get_wordset_by_name( $wordset_name );
         $words = $wordset['words'];
         
         $ng = count($words);
-        for($i = 0; $i < mb_strlen($seed) / 8; $i ++) {
+        for($i = 0, $iMax = $seed_size / 8; $i < $iMax; $i ++) {
             $word = self::swap_endian(mb_substr($seed, 8*$i, (8*$i+8) - (8*$i) ));
             $x = gmp_init($word, 16);
             $w1 = gmp_mod($x,$ng);
@@ -103,41 +120,50 @@ class Mnemonic {
      * Given a hexadecimal key string (seed),
      * return it's mnemonic representation plus an
      * extra checksum word.
+     * @param $message
+     * @param null $wordset_name
+     * @return array
+     * @throws \Exception
      */
-    static function encode_with_checksum($message, $wordset_name = null) {
+    public static function encode_with_checksum($message, $wordset_name = null): array
+    {
         $list = self::encode($message, $wordset_name);
         
         $wordset = self::get_wordset_by_name($wordset_name);
         $list[] = self::checksum($list, $wordset['prefix_len']);
         return $list ;
     }
-    
+
     /**
      * Given a mnemonic word list, return a hexadecimal encoded string (seed).
      *
+     * @param array $wlist
+     * @param string|null $wordset_name
+     * @return string
+     * @throws \Exception
      * @todo if anyone can make this work reliably with
      * pure PHP math (no gmp or bcmath), please submit a
      * pull request.
      */
-    static function decode($wlist, $wordset_name = null) {
+    public static function decode(array $wlist, ?string $wordset_name = null) : string{
         $wordset = self::get_wordset_by_name( $wordset_name );
         
         $plen = $wordset['prefix_len'];
         $tw = $wordset['trunc_words'];
         $wcount = count($tw);
+        $wlist_size = count($wlist);
 
         if (($plen === 0 && ($wcount % 3 !== 0)) || ($plen > 0 && ($wcount % 3 === 2))) {
             throw new \Exception("too few words");
         }
-        if ($plen > 0 && (count($wlist) % 3 === 0)) {
+        if ($plen > 0 && ($wlist_size % 3 === 0)) {
             throw new \Exception("last word missing");
         }
         
         $out = '';
 
-        for ($i = 0; $i < count($wlist)-1; $i += 3) {
-        
-            if($plen == 0) {
+        for ($i = 0; $i < $wlist_size-1; $i += 3) {
+            if($plen === 0) {
                 $w1 = @$tw[$wlist[$i]];
                 $w2 = @$tw[$wlist[$i + 1]];
                 $w3 = @$tw[$wlist[$i + 2]];
@@ -157,11 +183,14 @@ class Mnemonic {
         }
         return $out;
     }
-    
+
     /**
      * Given a wordset identifier, returns the full wordset
+     * @param string|null $name
+     * @return array
+     * @throws \Exception
      */
-    static public function get_wordset_by_name($name = null) {
+    public static function get_wordset_by_name(?string $name = null) : array {
         $name = $name ?: 'english';
         $wordset = self::get_wordsets();
         $ws = @$wordset[$name];
@@ -170,15 +199,18 @@ class Mnemonic {
         }
         return $ws;
     }
-    
+
     /**
      * Given a mnemonic array of words, returns name of matching
      * wordset that contains all words, or null if not found.
      *
      * throws an exception if more than one wordset matches all words,
      * but in theory that should never happen.
+     * @param array $mnemonic
+     * @return int|mixed|string
+     * @throws \Exception
      */
-    static public function find_wordset_by_mnemonic($mnemonic) {
+    public static function find_wordset_by_mnemonic(array $mnemonic) : string{
         $sets = self::get_wordsets();
         $matched_wordsets = [];
         foreach($sets as $ws_name => $ws) {
@@ -189,7 +221,7 @@ class Mnemonic {
             // entire wordset array.
             $allmatch = true;
             foreach($mnemonic as $word) {
-                $tw = $ws['prefix_len'] == 0 ? $word : mb_substr($word, 0, $ws['prefix_len']);
+                $tw = $ws['prefix_len'] === 0 ? $word : mb_substr($word, 0, $ws['prefix_len']);
                 if( @$ws['trunc_words'][$tw] === null) {
                     $allmatch = false;
                     break;
@@ -212,7 +244,8 @@ class Mnemonic {
     /**
      * returns list of available wordsets
      */
-    static public function get_wordset_list() {
+    public static function get_wordset_list(): array
+    {
         return array_keys( self::get_wordsets() );
     }
     
@@ -221,7 +254,8 @@ class Mnemonic {
      *
      * Each wordset is in a separate file in wordsets/*.ws.php
      */
-    static public function get_wordsets() {
+    public static function get_wordsets(): array
+    {
         
         static $wordsets = null;
         if( $wordsets ) {
@@ -257,7 +291,7 @@ class Mnemonic {
             $plen = $ws['prefix_len'];
             $i = 0;
             foreach( $ws['words'] as $w) {
-                $key = $plen == 0 ? $w : mb_substr($w, 0, $plen);
+                $key = $plen === 0 ? $w : mb_substr($w, 0, $plen);
                 $tw[$key] = $i++;
             }
     
