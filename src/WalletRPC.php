@@ -32,84 +32,68 @@
 namespace MoneroIntegrations\MoneroPhp;
 
 use Exception;
+use MoneroIntegrations\MoneroPhp\Core\JsonRPCClient;
 
-class walletRPC
+class WalletRPC
 {
-  private $client;
+  private JsonRPCClient $client;
+  private bool $checkSSL;
+  private string $protocol;
+  private string $host;
+  private int $port;
+  private string $url;
+  private null|string $user;
+  private null|string $password;
+  private bool $useGMP;
 
-  private $protocol;
-  private $host;
-  private $port;
-  private $url;
-  private $user;
-  private $password;
-
-  /**
-   *
-   * Start a connection with the Monero wallet RPC interface (monero-wallet-rpc)
-   *
-   * @param  string  $host      monero-wallet-rpc hostname               (optional)
-   * @param  int     $port      monero-wallet-rpc port                   (optional)
-   * @param  string  $protocol  monero-wallet-rpc protocol (eg. 'http')  (optional)
-   * @param  string  $user      monero-wallet-rpc username               (optional)
-   * @param  string  $password  monero-wallet-rpc passphrase             (optional)
-   *
-   */
-  function __construct($host = '127.0.0.1', $port = 18081, $SSL = true, $user = null, $password = null)
+    /**
+     *
+     * Start a connection with the Monero wallet RPC interface (monero-wallet-rpc)
+     *
+     * @param string|array $host monero-wallet-rpc hostname               (optional)
+     * @param int $port monero-wallet-rpc port                   (optional)
+     * @param bool $checkSSL
+     * @param string|null $user monero-wallet-rpc username               (optional)
+     * @param string|null $password monero-wallet-rpc passphrase             (optional)
+     */
+  public function __construct(string|array $host = '127.0.0.1', int $port = 18081, bool $checkSSL = true, string $user = null, string $password = null)
   {
     if (is_array($host)) { // Parameters passed in as object/dictionary
-      $params = $host;
-
-      if (array_key_exists('host', $params)) {
-        $host = $params['host'];
-      } else {
-        $host = '127.0.0.1';
-      }
-      if (array_key_exists('port', $params)) {
-        $port = $params['port'];
-      }
-      if (array_key_exists('protocol', $params)) {
-        $protocol = $params['protocol'];
-      }
-      if (array_key_exists('user', $params)) {
-        $user = $params['user'];
-      }
-      if (array_key_exists('password', $params)) {
-        $password = $params['password'];
-      }
+        $this->host = array_key_exists('host', $host) ? $host['host'] : '127.0.0.1';
+        $this->port = array_key_exists('port', $host) ? (int) $host['port'] : 18081;
+        $this->checkSSL = !array_key_exists('checkSSL', $host) || $host['checkSSL'];
+        $this->user = array_key_exists('user', $host) ? $host['user'] : '';
+        $this->password = array_key_exists('password', $host) ? $host['password'] : '';
+    }else{
+        $this->host = $host;
+        $this->port = $port;
+        $this->checkSSL = $checkSSL;
+        $this->user = $user;
+        $this->password = $password;
     }
-      
-      if ($SSL) {
-          $protocol = 'https';
-      } else {
-          $protocol = 'http';
-      }
-    
-    $this->host = $host;
-    $this->port = $port;
-    $this->protocol = $protocol;
-    $this->user = $user;
-    $this->password = $password;
-    $this->check_SSL = $SSL;
-    
-    $this->url = $protocol.'://'.$host.':'.$port.'/';
-    $this->client = new jsonRPCClient($this->url, $this->user, $this->password, $this->check_SSL);
+
+      $this->protocol = match ($this->checkSSL){
+          true => 'https',
+          false => 'http'
+      };
+
+    $this->url = $this->protocol.'://'.$this->host.':'.$this->port.'/';
+    $this->client = new JsonRPCClient($this->url, $this->user, $this->password, $this->checkSSL);
+    $this->useGMP = extension_loaded('gmp');
   }
 
-  /**
-   *
-   * Execute command via jsonRPCClient
-   *
-   * @param  string  $method  RPC method to call
-   * @param  object  $params  Parameters to pass  (optional)
-   *
-   * @return string  Call result
-   *
-   */
-  private function _run($method, $params = null, $path = 'json_rpc')
+    /**
+     *
+     * Execute command via JsonRPCClient
+     *
+     * @param string $method RPC method to call
+     * @param array|null $params Parameters to pass  (optional)
+     *
+     * @return array Call result
+     */
+  private function _run(string $method, array $params = null): array
   {
-    $result = $this->client->_run($method, $params, $path);
-    return $result;
+      return $this->client->_run($method, $params, 'json_rpc');
   }
 
   /**
@@ -118,41 +102,39 @@ class walletRPC
    *
    * @param  object  $json  JSON object to print
    *
-   * @return none
+   * @return void
    *
    */
-  public function _print($json)
+  public function _print(mixed $json): void
   {
-    echo json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    echo json_encode($json, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
   }
 
-  /**
-   *
-   * Convert from moneroj to tacoshi (piconero)
-   *
-   * @param  number  $method  Amount (in monero) to transform to tacoshi (piconero)  (optional)
-   *
-   * @return number
-   *
-   */
-  public function _transform($amount = 0)
+    /**
+     *
+     * Convert from moneroj to tacoshi (piconero)
+     *
+     * @param string $amount
+     * @return int
+     */
+  public function _transform(string $amount) : int
   {
-    return intval(bcmul($amount, 1000000000000));
+    return (int) bcmul($amount, 1000000000000);
   }
 
   /**
    *
    * Look up an account's balance
    *
-   * @param  number  $account_index  Index of account to look up  (optional)
+   * @param  int  $account_index  Index of account to look up  (optional)
    *
-   * @return object  Example: {
+   * @return array  Example: {
    *   "balance": 140000000000,
    *   "unlocked_balance": 50000000000
    * }
    *
    */
-  public function get_balance($account_index = 0)
+  public function get_balance(int $account_index = 0) : array
   {
     $params = array('account_index' => $account_index);
     return $this->_run('get_balance', $params);
@@ -163,7 +145,7 @@ class walletRPC
    * Alias of get_balance()
    *
    */
-  public function getbalance($account_index = 0)
+  public function getbalance(int $account_index = 0): array
   {
     return $this->get_balance($account_index);
   }

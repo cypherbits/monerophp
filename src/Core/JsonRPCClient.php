@@ -11,6 +11,7 @@
 namespace MoneroIntegrations\MoneroPhp\Core;
 
 use InvalidArgumentException;
+use JsonException;
 use RuntimeException;
 
 class JsonRPCClient
@@ -40,6 +41,14 @@ class JsonRPCClient
         503 => '503 Service Unavailable'
     );
 
+    /**
+     * JsonRPCClient constructor.
+     * @param string $pUrl
+     * @param string $pUser
+     * @param string $pPass
+     * @param bool $checkSSL
+     * @param bool $debug
+     */
     public function __construct(string $pUrl, string $pUser, string $pPass, bool $checkSSL, bool $debug = false)
     {
         $this->validate(false === extension_loaded('curl'), 'The curl extension must be loaded to use this class!');
@@ -69,7 +78,7 @@ class JsonRPCClient
         }
     }
 
-    public function _run(string $pMethod, array $pParams, string $path) : string|int
+    public function _run(string $pMethod, array $pParams, string $path) : array
     {
         // check if given params are correct
         $this->validate(false === is_scalar($pMethod), 'Method name has no scalar value');
@@ -77,22 +86,20 @@ class JsonRPCClient
         // Request (method invocation)
         try {
             $request = json_encode(array('jsonrpc' => '2.0', 'method' => $pMethod, 'params' => $pParams), JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
+        } catch (JsonException $e) {
             $this->validate(true, $e->getTraceAsString());
-            return -1;
         }
         // if is_debug mode is true then add url and request to is_debug
-        $this->debug('Url: ' . $this->url . "\r\n", false);
-        $this->debug('Request: ' . $request . "\r\n", false);
+        $this->debug('Url: ' . $this->url . "\r\n");
+        $this->debug('Request: ' . $request . "\r\n");
         $responseMessage = $this->getResponse($request, $path);
         // if is_debug mode is true then add response to is_debug and display it
         $this->debug('Response: ' . $responseMessage . "\r\n", true);
         // decode and create array ( can be object, just set to false )
         try {
             $responseDecoded = json_decode($responseMessage, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
+        } catch (JsonException $e) {
             $this->validate(true, $e->getTraceAsString());
-            return -1;
         }
 
         if (isset($responseDecoded['error']))
@@ -105,7 +112,7 @@ class JsonRPCClient
             }
             $this->validate( !is_null($responseDecoded['error']), $errorMessage);
         }
-        return $responseDecoded['result'] ?? -1;
+        return $responseDecoded['result'] ?? throw new RuntimeException('Result response not found');
     }
 
     public function & getResponse(string &$pRequest, string &$path): bool|string
