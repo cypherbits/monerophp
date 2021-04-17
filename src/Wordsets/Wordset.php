@@ -1,7 +1,7 @@
 <?php
 
 
-namespace MoneroIntegrations\MoneroPhp\wordsets;
+namespace MoneroIntegrations\MoneroPhp\Wordsets;
 
 interface Wordset
 {

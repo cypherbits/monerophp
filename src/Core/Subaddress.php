@@ -19,22 +19,25 @@
   SOFTWARE.
 */
 
-class subaddress
+namespace MoneroIntegrations\MoneroPhp\Core;
+
+use Tuupola\Base58;
+
+class Subaddress
 {
-	protected $ed25519;
-	protected $base58;
-	
+	private Base58 $base58;
+	private bool $useGMP;
+
 	public function __construct()
 	{
-		$this->ed25519 = new ed25519();
-		$this->base58 = new base58();
-		$this->gmp = extension_loaded('gmp');
+		$this->base58 = new Base58(["characters" => Base58::BITCOIN]);
+		$this->useGMP = extension_loaded('gmp');
 	}
 	
 	private function sc_reduce($input)
 	{
 		$integer = $this->ed25519->decodeint(hex2bin($input));
-		if($this->gmp)
+		if($this->useGMP)
 			$modulo = gmp_mod($integer , $this->ed25519->l);
 		else
 			$modulo = bcmod($integer , $this->ed25519->l);

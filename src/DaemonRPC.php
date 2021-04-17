@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * monerophp/daemonRPC
+ * monerophp/DaemonRPC
  *
  * A class for making calls to a Monero daemon's RPC API using PHP
  * https://github.com/monero-integrations/monerophp
@@ -33,10 +33,9 @@
 namespace MoneroIntegrations\MoneroPhp;
 use Exception;
 
-class daemonRPC
+class DaemonRPC
 {
   private $client;
-
   private $protocol;
   private $host;
   private $port;

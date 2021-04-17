@@ -27,7 +27,7 @@
  * This PHP code, itself being an original work, is hereby placed in the public domain.
  */
 
-namespace MoneroIntegrations\MoneroPhp;
+namespace MoneroIntegrations\MoneroPhp\Core;
 
 /**
  * A standalone class to encode, decode, and validate monero mnemonics
@@ -60,7 +60,7 @@ class Mnemonic {
      * Given a mnemonic seed word list, check if checksum word is valid.
      * Returns boolean value.
      * @param array $words
-     * @param $prefix_len
+     * @param int $prefix_len
      * @return bool
      */
     //TODO: see if this does what we want... we are not validating anything??
@@ -72,7 +72,7 @@ class Mnemonic {
     /**
      * Given an 8 byte word (or shorter),
      * pads to 8 bytes (adds 0 at left) and reverses endian byte order.
-     * @param $word
+     * @param string $word
      * @return string
      */
     public static function swap_endian(string $word):string {
@@ -207,7 +207,7 @@ class Mnemonic {
      * throws an exception if more than one wordset matches all words,
      * but in theory that should never happen.
      * @param array $mnemonic
-     * @return int|mixed|string
+     * @return string
      * @throws \Exception
      */
     public static function find_wordset_by_mnemonic(array $mnemonic) : string{
@@ -263,7 +263,7 @@ class Mnemonic {
         }
         
         $wordsets = [];
-        $files = glob(__DIR__ . 'wordsets/*.ws.php');
+        $files = glob(__DIR__ . '../Wordsets/*.ws.php');
         foreach($files as $f) {
             require_once($f);
     

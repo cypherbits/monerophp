@@ -8,12 +8,12 @@
  * @author Kacper Rowinski <krowinski@implix.com>
  * http://implix.com
  */
-namespace MoneroIntegrations\MoneroPhp;
+namespace MoneroIntegrations\MoneroPhp\Core;
 
 use InvalidArgumentException;
 use RuntimeException;
 
-class jsonRPCClient
+class JsonRPCClient
 {
     protected $url = null, $is_debug = false, $parameters_structure = 'array';
     private $username;
