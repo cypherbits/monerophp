@@ -18,8 +18,8 @@ class JsonRPCClient
 {
     private string $url;
     private bool $debug;
-    private string $username;
-    private string $password;
+    private null|string $username;
+    private null|string $password;
     private array $curl_options = array(
         CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_TIMEOUT => 8
@@ -44,12 +44,12 @@ class JsonRPCClient
     /**
      * JsonRPCClient constructor.
      * @param string $pUrl
-     * @param string $pUser
-     * @param string $pPass
+     * @param string|null $pUser
+     * @param string|null $pPass
      * @param bool $checkSSL
      * @param bool $debug
      */
-    public function __construct(string $pUrl, string $pUser, string $pPass, bool $checkSSL, bool $debug = false)
+    public function __construct(string $pUrl, null|string $pUser, null|string $pPass, bool $checkSSL, bool $debug = false)
     {
         $this->validate(false === extension_loaded('curl'), 'The curl extension must be loaded to use this class!');
         $this->validate(false === extension_loaded('json'), 'The json extension must be loaded to use this class!');
