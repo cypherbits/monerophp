@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
   Copyright (c) 2018, Monero Integrations
 
@@ -24,15 +24,15 @@
 namespace MoneroIntegrations\MoneroPhp;
 
     use Exception;
+    use Tuupola\Base58;
 
     class Cryptonote
     {
-        protected $ed25519;
+        private Base58 $base58;
+
         public function __construct()
         {
-            $this->ed25519 = new ed25519();
             $this->base58 = new Base58();
-            $this->varint = new Varint();
         }
 
         /*
@@ -40,10 +40,10 @@ namespace MoneroIntegrations\MoneroPhp;
          * @return string Hex encoded string of the hashed data
          *
          */
-        public function keccak_256($message)
+        public function keccak_256($message): string
         {
-            $keccak256 = SHA3::init (SHA3::KECCAK_256);
-            $keccak256->absorb (hex2bin($message));
+            $keccak256 = SHA3::init(SHA3::KECCAK_256);
+            $keccak256->absorb(hex2bin($message));
             return bin2hex ($keccak256->squeeze (32)) ;
         }
 

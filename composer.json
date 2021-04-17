@@ -29,10 +29,15 @@
         "ext-bcmath": "*",
         "ext-curl": "*",
         "ext-mbstring": "*",
-        "ext-gmp": "*"
+        "ext-gmp": "*",
+        "tuupola/base58":"1.0.*",
+        "kornrunner/keccak": "1.1.*"
     },
     "suggest": {
         "ext-gmp": "Used to have a multiple math precision for generating address"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
     },
     "autoload": {
         "psr-4": {
