@@ -2,8 +2,6 @@
 
 namespace MoneroIntegrations\MoneroPhp\wordsets;
 
-use MoneroIntegrations\MoneroPhp\Wordset;
-
 class italian implements Wordset {
 
     /* Returns name of Wordset in the Wordset's native language.

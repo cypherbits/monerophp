@@ -7,7 +7,7 @@ namespace MoneroIntegrations\MoneroPhp\wordsets;
  */
 
 
-use MoneroIntegrations\MoneroPhp\Wordset;
+
 
 class english_old implements Wordset {
 
