@@ -10,14 +10,14 @@ class english implements Wordset {
      * This is a human-readable string, and should be capitalized
      * if the language supports it.
      */
-    static public function name() : string {
+    public static function name() : string {
         return "English";
     }
 
     /* Returns name of Wordset in english.
      * This is a human-readable string, and should be capitalized
      */
-    static public function english_name() : string {
+    public static function english_name() : string {
         return "English";        
     }
 
@@ -28,13 +28,13 @@ class english implements Wordset {
      * A value of 0 indicates that there is no unique prefix
      * and the entire word must be used instead.
      */    
-    static public function prefix_length() : int {
+    public static function prefix_length() : int {
         return 3;  // first 3 letters of each word in Wordset is unique.
     }
     
     /* Returns an array of all words in the Wordset.
      */    
-    static public function words() : array {
+    public static function words() : array {
         return [
             "abbey",
             "abducts",
