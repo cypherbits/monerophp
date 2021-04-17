@@ -92,7 +92,7 @@ class WalletRPC
      *
      * @return array Call result
      */
-    private function _run(string $method, array $params = null): array
+    private function _run(string $method, null|array $params = null): array
     {
         return $this->client->_run($method, $params, 'json_rpc');
     }
@@ -485,70 +485,36 @@ class WalletRPC
      * Same as transfer, but splits transfer into more than one transaction if necessary
      *
      */
-    public function transfer_split($amount, $address = '', $payment_id = '', $mixin = 10, $account_index = 0, $subaddr_indices = '', $priority = 2, $unlock_time = 0, $do_not_relay = false)
+    public function transfer_split(array $destinations, int $account_index = 0, array $subaddr_indices = [], int $mixin = 10, int $ring_size = 11, int $unlock_time = 0, bool $get_tx_key = true,
+                                   int $priority = 2, bool $do_not_relay = false, bool $get_tx_hex = false, bool $new_algorithm = false, bool $get_tx_metadata = false):array
     {
-        if (is_array($amount)) { // Parameters passed in as object/dictionary
-            $params = $amount;
-
-            if (array_key_exists('destinations', $params)) {
-                $destinations = $params['destinations'];
-
-                if (!is_array($destinations)) {
-                    throw new Exception('Error: destinations must be an array');
-                }
-
-                foreach ($destinations as $destination) {
-                    if (array_key_exists('amount', $destinations[$destination])) {
-                        $destinations[$destination]['amount'] = $this->_transform($destinations[$destination]['amount']);
-                    } else {
-                        throw new Exception('Error: Amount required');
-                    }
-                    if (!array_key_exists('address', $destinations[$destination])) {
-                        throw new Exception('Error: Address required');
-                    }
-                }
-            } else {
-                if (array_key_exists('amount', $params)) {
-                    $amount = $params['amount'];
-                } else {
-                    throw new Exception('Error: Amount required');
-                }
-                if (array_key_exists('address', $params)) {
-                    $address = $params['address'];
-                } else {
-                    throw new Exception('Error: Address required');
-                }
-                $destinations = array(array('amount' => $this->_transform($amount), 'address' => $address));
-            }
-            if (array_key_exists('mixin', $params)) {
-                $mixin = $params['mixin'];
-            }
-            if (array_key_exists('payment_id', $params)) {
-                $payment_id = $params['payment_id'];
-            }
-            if (array_key_exists('account_index', $params)) {
-                $account_index = $params['account_index'];
-            }
-            if (array_key_exists('subaddr_indices', $params)) {
-                $subaddr_indices = $params['subaddr_indices'];
-            }
-            if (array_key_exists('priority', $params)) {
-                $priority = $params['priority'];
-            }
-            if (array_key_exists('unlock_time', $params)) {
-                $unlock_time = $params['unlock_time'];
-            }
-            if (array_key_exists('do_not_relay', $params)) {
-                $do_not_relay = $params['do_not_relay'];
-            }
-        } else { // Legacy parameters used
-            $destinations = array(array('amount' => $this->_transform($amount), 'address' => $address));
+        if (count($destinations) === 0){
+            throw new Exception('Error: At least one destination required. Each destination can be an Array or TransferDestination object.');
         }
 
-        $params = array('destinations' => $destinations, 'mixin' => $mixin, 'get_tx_key' => true, 'account_index' => $account_index, 'subaddr_indices' => $subaddr_indices, 'payment_id' => $payment_id, 'priority' => $priority, 'unlock_time' => $unlock_time, 'do_not_relay' => $do_not_relay);
+        foreach ($destinations as $index => $destination){
+            if ($destination instanceof TransferDestination){
+                $destinations[$index] = $destination->toArray();
+            }elseif (!is_array($destination)){
+                throw new Exception("Error: destination items must be an array['amount' => 'piconero', 'address' => 'adress'] or an instance of TransferDestination");
+            }
+        }
+        $params = array('destinations' => $destinations,
+            'account_index' => $account_index,
+            'subaddr_indices' => $subaddr_indices,
+            'mixin' => $mixin,
+            'ring_size' => $ring_size,
+            'unlock_time' => $unlock_time,
+            'get_tx_key' => $get_tx_key,
+            'priority' => $priority,
+            'do_not_relay' => $do_not_relay,
+            'get_tx_hex' => $get_tx_hex,
+            'new_algorithm' => $new_algorithm,
+            'get_tx_metadata' => $get_tx_metadata );
+
         $transfer_method = $this->_run('transfer_split', $params);
 
-        $save = $this->store(); // Save wallet state after transfer
+        $this->store(); // Save wallet state after transfer
 
         return $transfer_method;
     }
@@ -557,30 +523,26 @@ class WalletRPC
      *
      * Send all dust outputs back to the wallet
      *
-     * @param  none
-     *
-     * @return object  Example: {
+     * @return array  Example: {
      *   // TODO example
      * }
      *
      */
-    public function sweep_dust()
+    public function sweep_dust(): array
     {
         return $this->_run('sweep_dust');
     }
 
     /**
      *
-     * Send all unmixable outputs back to the wallet
+     * Alias of sweep_dust
      *
-     * @param  none
-     *
-     * @return object  Example: {
+     * @return array  Example: {
      *   // TODO example
      * }
      *
      */
-    public function sweep_unmixable()
+    public function sweep_unmixable(): array
     {
         return $this->_run('sweep_unmixable');
     }

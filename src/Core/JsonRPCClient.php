@@ -78,7 +78,7 @@ class JsonRPCClient
         }
     }
 
-    public function _run(string $pMethod, array $pParams, string $path) : array
+    public function _run(string $pMethod, null|array $pParams, string $path) : array
     {
         // check if given params are correct
         $this->validate(false === is_scalar($pMethod), 'Method name has no scalar value');
