@@ -15,16 +15,19 @@ use RuntimeException;
 
 class JsonRPCClient
 {
-    protected $url = null, $is_debug = false, $parameters_structure = 'array';
-    private $username;
-    private $password;
-    protected $curl_options = array(
+    private string $url;
+    private bool $debug;
+    private string $username;
+    private string $password;
+    private array $curl_options = array(
         CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_TIMEOUT => 8
     );
+    private bool $curl_checkSSL;
+    private string $debugOutput;
+    private string $debugStartTime;
 
-
-    private $httpErrors = array(
+    private static array $httpErrors = array(
         400 => '400 Bad Request',
         401 => '401 Unauthorized',
         403 => '403 Forbidden',
@@ -37,7 +40,7 @@ class JsonRPCClient
         503 => '503 Service Unavailable'
     );
 
-    public function __construct($pUrl, $pUser, $pPass, $check_SSL)
+    public function __construct(string $pUrl, string $pUser, string $pPass, bool $checkSSL, bool $debug = false)
     {
         $this->validate(false === extension_loaded('curl'), 'The curl extension must be loaded to use this class!');
         $this->validate(false === extension_loaded('json'), 'The json extension must be loaded to use this class!');
@@ -45,35 +48,39 @@ class JsonRPCClient
         $this->url = $pUrl;
         $this->username = $pUser;
         $this->password = $pPass;
-        $this->SSL = $check_SSL;
+        $this->curl_checkSSL = $checkSSL;
+        $this->debug = $debug;
     }
 
-    public function setDebug($pIsDebug)
+    public function setDebug(bool $debug) : void
     {
-        $this->is_debug = !empty($pIsDebug);
-        return $this;
+        $this->debug = $debug;
     }
 
-    public function setCurlOptions($pOptionsArray)
+    public function setCurlOptions(array $pOptionsArray): void
     {
         if (is_array($pOptionsArray))
         {
-            $this->curl_options = $pOptionsArray + $this->curl_options;
+            $this->curl_options = array_merge($this->curl_options, $pOptionsArray);
         }
         else
         {
-            throw new InvalidArgumentException('Invalid options type.');
+            throw new InvalidArgumentException('Invalid options type, must be an array.');
         }
-        return $this;
     }
 
-    public function _run($pMethod, $pParams, $path)
+    public function _run(string $pMethod, array $pParams, string $path) : string|int
     {
         // check if given params are correct
         $this->validate(false === is_scalar($pMethod), 'Method name has no scalar value');
         // send params as an object or an array
         // Request (method invocation)
-        $request = json_encode(array('jsonrpc' => '2.0', 'method' => $pMethod, 'params' => $pParams));
+        try {
+            $request = json_encode(array('jsonrpc' => '2.0', 'method' => $pMethod, 'params' => $pParams), JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            $this->validate(true, $e->getTraceAsString());
+            return -1;
+        }
         // if is_debug mode is true then add url and request to is_debug
         $this->debug('Url: ' . $this->url . "\r\n", false);
         $this->debug('Request: ' . $request . "\r\n", false);
@@ -81,10 +88,13 @@ class JsonRPCClient
         // if is_debug mode is true then add response to is_debug and display it
         $this->debug('Response: ' . $responseMessage . "\r\n", true);
         // decode and create array ( can be object, just set to false )
-        $responseDecoded = json_decode($responseMessage, true);
-        // check if decoding json generated any errors
-        $jsonErrorMsg = json_last_error_msg();
-        $this->validate( !is_null($jsonErrorMsg) && $jsonErrorMsg !== 'No error' , $jsonErrorMsg . ': ' . $responseMessage);
+        try {
+            $responseDecoded = json_decode($responseMessage, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            $this->validate(true, $e->getTraceAsString());
+            return -1;
+        }
+
         if (isset($responseDecoded['error']))
         {
             $errorMessage = 'Request have return error: ' . $responseDecoded['error']['message'] . '; ' . "\n" .
@@ -98,7 +108,7 @@ class JsonRPCClient
         return $responseDecoded['result'] ?? -1;
     }
 
-    protected function & getResponse(&$pRequest, &$path)
+    public function & getResponse(string &$pRequest, string &$path): bool|string
     {
         // do the actual connection
         $ch = curl_init();
@@ -115,7 +125,7 @@ class JsonRPCClient
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-        if ($this->SSL)
+        if ($this->curl_checkSSL)
         {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, '2');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -130,9 +140,9 @@ class JsonRPCClient
         $response = curl_exec($ch);
         // check http status code
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if (isset($this->httpErrors[$httpCode]))
+        if (isset(self::$httpErrors[$httpCode]))
         {
-            throw new RuntimeException('Response Http Error - ' . $this->httpErrors[$httpCode]);
+            throw new RuntimeException('Response Http Error - ' . self::$httpErrors[$httpCode]);
         }
         // check for curl error
         if (0 < curl_errno($ch))
@@ -144,7 +154,7 @@ class JsonRPCClient
         return $response;
     }
 
-    public function validate($pFailed, $pErrMsg)
+    private function validate(bool $pFailed, string $pErrMsg): void
     {
         if ($pFailed)
         {
@@ -152,29 +162,28 @@ class JsonRPCClient
         }
     }
 
-    protected function debug($pAdd, $pShow = false)
+    private function debug(string $pAdd, bool $pShow = false): void
     {
-        static $debug, $startTime;
         // is_debug off return
-        if (false === $this->is_debug)
+        if (false === $this->debug)
         {
             return;
         }
         // add
-        $debug .= $pAdd;
+        $this->debugOutput .= $pAdd;
         // get starttime
-        $startTime = empty($startTime) ? array_sum(explode(' ', microtime())) : $startTime;
-        if (true === $pShow and !empty($debug))
+        $this->debugStartTime = empty($this->debugStartTime) ? array_sum(explode(' ', microtime())) : $this->debugStartTime;
+        if (true === $pShow && !empty($this->debugOutput))
         {
             // get endtime
             $endTime = array_sum(explode(' ', microtime()));
             // performance summary
-            $debug .= 'Request time: ' . round($endTime - $startTime, 3) . ' s Memory usage: ' . round(memory_get_usage() / 1024) . " kb\r\n";
-            echo nl2br($debug);
+            $this->debugOutput .= 'Request time: ' . round($endTime - $this->debugStartTime, 3) . ' s Memory usage: ' . round(memory_get_usage() / 1024) . " kb\r\n";
+            echo nl2br($this->debugOutput);
             // send output immediately
             flush();
             // clean static
-            $debug = $startTime = null;
+            $this->debugStartTime = $this->debugOutput = '';
         }
     }
 }
