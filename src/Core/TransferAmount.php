@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 
 namespace MoneroIntegrations\MoneroPhp\Core;
@@ -33,7 +33,7 @@ class TransferAmount
 
     public function getAsMonero(): string
     {
-        return bcdiv($this->amount, 1000000000000);
+        return bcdiv($this->amount, '1000000000000');
     }
 
 
@@ -47,7 +47,7 @@ class TransferAmount
      */
     public static function transformToPiconero(string $amount) : int
     {
-        return ((int) $amount > 9223372) ? throw new \Exception("Error: FIXME: too much Monero to send. Max Monero Amount is 9223372") : (int) bcmul($amount, 1000000000000);
+        return ((int) $amount > 9223372) ? throw new \Exception("Error: FIXME: too much Monero to send. Max Monero Amount is 9223372") : (int) bcmul($amount, '1000000000000');
     }
 
 

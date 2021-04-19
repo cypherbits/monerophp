@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * mnemonic.php - lightweight monero mnemonic class in php.
@@ -6,7 +6,7 @@
  *
  * Translated to PHP from https://raw.githubusercontent.com/bigreddmachine/MoneroPy/master/moneropy/mnemonic.py
  * initially using https://github.com/dan-da/py2php.   mnemonic.php contains the following notice.
-  
+
  * Electrum - lightweight Bitcoin client
  * Copyright (C) 2011 thomasv@gitorious
  *
@@ -19,7 +19,7 @@
  * subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.  
+ * included in all copies or substantial portions of the Software.
  * Further improvements, notably support for multiple languages/wordsets adapted
  * from mnemonic.js found at https://xmr.llcoins.net/js/mnemonic.js which is in
  * the public domain.
@@ -44,8 +44,8 @@ class Mnemonic {
      */
     public static function checksum(array $words, int $prefix_len) : array{
         $words_size = count($words);
-        $words = array_slice($words, null, $words_size > 13 ? 24 : 12);
-        
+        $words = array_slice($words, 0, $words_size > 13 ? 24 : 12);
+
         $wstr = '';
         foreach($words as $word) {
             $wstr .= ($prefix_len === 0 ? $word : mb_substr($word, 0, $prefix_len));
@@ -76,7 +76,7 @@ class Mnemonic {
      * @return string
      */
     public static function swap_endian(string $word):string {
-        $word = str_pad ( $word, 8, 0, STR_PAD_LEFT);
+        $word = str_pad ( $word, 8, '0', STR_PAD_LEFT);
         return implode('', array_reverse(str_split($word, 2)));
     }
 
@@ -98,10 +98,10 @@ class Mnemonic {
         $seed_size = mb_strlen($seed);
         assert($seed_size % 8 === 0);
         $out = [];
-        
+
         $wordset = self::get_wordset_by_name( $wordset_name );
         $words = $wordset['words'];
-        
+
         $ng = count($words);
         for($i = 0, $iMax = $seed_size / 8; $i < $iMax; $i ++) {
             $word = self::swap_endian(mb_substr($seed, 8*$i, (8*$i+8) - (8*$i) ));
@@ -128,7 +128,7 @@ class Mnemonic {
     public static function encode_with_checksum($message, $wordset_name = null): array
     {
         $list = self::encode($message, $wordset_name);
-        
+
         $wordset = self::get_wordset_by_name($wordset_name);
         $list[] = self::checksum($list, $wordset['prefix_len']);
         return $list ;
@@ -147,7 +147,7 @@ class Mnemonic {
      */
     public static function decode(array $wlist, ?string $wordset_name = null) : string{
         $wordset = self::get_wordset_by_name( $wordset_name );
-        
+
         $plen = $wordset['prefix_len'];
         $tw = $wordset['trunc_words'];
         $wcount = count($tw);
@@ -159,7 +159,7 @@ class Mnemonic {
         if ($plen > 0 && ($wlist_size % 3 === 0)) {
             throw new \Exception("last word missing");
         }
-        
+
         $out = '';
 
         for ($i = 0; $i < $wlist_size-1; $i += 3) {
@@ -173,7 +173,7 @@ class Mnemonic {
                 $w2 = @$tw[mb_substr($wlist[$i + 1], 0, $plen)];
                 $w3 = @$tw[mb_substr($wlist[$i + 2], 0, $plen)];
             }
-            
+
             if ($w1 === null || $w2 === null || $w3 === null) {
                 throw new \Exception("invalid word in mnemonic");
             }
@@ -214,7 +214,7 @@ class Mnemonic {
         $sets = self::get_wordsets();
         $matched_wordsets = [];
         foreach($sets as $ws_name => $ws) {
-            
+
             // note, to make the search faster, we truncate each word
             // according to prefix_len of the wordset, and lookup
             // by key in trunc_words, rather than searching through
@@ -231,16 +231,16 @@ class Mnemonic {
                 $matched_wordsets[] = $ws_name;
             }
         }
-        
+
         $cnt = count($matched_wordsets);
         if($cnt > 1) {
             throw new \Exception("Ambiguous match. mnemonic matches $cnt wordsets.");
         }
-        
+
         return @$matched_wordsets[0];
     }
-    
-    
+
+
     /**
      * returns list of available wordsets
      */
@@ -248,7 +248,7 @@ class Mnemonic {
     {
         return array_keys( self::get_wordsets() );
     }
-    
+
     /**
      * This function returns all available wordsets.
      *
@@ -256,20 +256,20 @@ class Mnemonic {
      */
     public static function get_wordsets(): array
     {
-        
+
         static $wordsets = null;
         if( $wordsets ) {
             return $wordsets;
         }
-        
+
         $wordsets = [];
         $files = glob(__DIR__ . '../Wordsets/*.ws.php');
         foreach($files as $f) {
             require_once($f);
-    
+
             list($wordset) = explode('.', basename($f));
             $classname = __NAMESPACE__ . '\\' . $wordset;
-            
+
             $wordsets[$wordset] = [
                 'name' => $classname::name(),
                 'english_name' => $classname::english_name(),
@@ -277,7 +277,7 @@ class Mnemonic {
                 'words' => $classname::words(),
             ];
         }
-     
+
         // This loop adds the key 'trunc_words' to each wordset, which contains
         // a pre-generated list of words truncated to length prefix_len.
         // This list is optimized for fast lookup of the truncated word
@@ -286,7 +286,7 @@ class Mnemonic {
         // A further optimization could be to only pre-generate trunc_words on the fly
         // when a wordset is actually used, rather than for all wordsets.
         foreach($wordsets as &$ws) {
-            
+
             $tw = [];
             $plen = $ws['prefix_len'];
             $i = 0;
@@ -294,10 +294,10 @@ class Mnemonic {
                 $key = $plen === 0 ? $w : mb_substr($w, 0, $plen);
                 $tw[$key] = $i++;
             }
-    
+
             $ws['trunc_words'] = $tw;
         }
         return $wordsets;
     }
-    
+
 }
