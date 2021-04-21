@@ -7,6 +7,9 @@
  *
  * @author Kacper Rowinski <krowinski@implix.com>
  * http://implix.com
+ *
+ * @author Cypherbits <info@avanix.es>
+ * PHP8 porting and refactor
  */
 namespace MoneroIntegrations\MoneroPhp\Core;
 

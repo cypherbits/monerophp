@@ -11,6 +11,7 @@
  *   Serhack [Monero Integrations] <nico@serhack.me> (https://serhack.me)
  *   TheKoziTwo [xmr-integration] <thekozitwo@gmail.com>
  *   Kacper Rowinski [jsonRPCClient] <krowinski@implix.com>
+ *   Cypherbits <info@avanix.es>
  *
  * @author     Monero Integrations Team <support@monerointegrations.com> (https://github.com/monero-integrations)
  * @copyright  2018

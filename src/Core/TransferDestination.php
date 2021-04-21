@@ -1,5 +1,8 @@
 <?php declare(strict_types=1);
-
+/**
+ * @author Cypherbits <info@avanix.es>
+ * PHP8 porting and refactor
+ */
 
 namespace MoneroIntegrations\MoneroPhp\Core;
 
@@ -7,7 +10,7 @@ class TransferDestination
 {
 
     private TransferAmount $amount;
-    private String $address;
+    private string $address;
 
     /**
      * TransferDestination constructor.
@@ -64,7 +67,8 @@ class TransferDestination
         $this->address = $address;
     }
 
-    public function toArray(): array{
+    public function toArray(): array
+    {
         return ['amount' => $this->amount->getAsPiconero(), 'address' => $this->address];
     }
 

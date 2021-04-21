@@ -1,5 +1,8 @@
 <?php declare(strict_types=1);
-
+/**
+ * @author Cypherbits <info@avanix.es>
+ * PHP8 porting and refactor
+ */
 
 namespace MoneroIntegrations\MoneroPhp\Core;
 
@@ -45,9 +48,9 @@ class TransferAmount
      * @return int
      * @throws \Exception
      */
-    public static function transformToPiconero(string $amount) : int
+    public static function transformToPiconero(string $amount): int
     {
-        return ((int) $amount > 9223372) ? throw new \Exception("Error: FIXME: too much Monero to send. Max Monero Amount is 9223372") : (int) bcmul($amount, '1000000000000');
+        return ((int)$amount > 9223372) ? throw new \Exception("Error: FIXME: too much Monero to send. Max Monero Amount is 9223372") : (int)bcmul($amount, '1000000000000');
     }
 
     /**
@@ -55,7 +58,8 @@ class TransferAmount
      * @param string $value
      * @return bool
      */
-    public static function isValidPiconero(string $value): bool{
+    public static function isValidPiconero(string $value): bool
+    {
         return (float)$value !== floor((float)$value);
     }
 
