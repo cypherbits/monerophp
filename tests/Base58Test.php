@@ -21,6 +21,6 @@ class Base58Test extends TestCase
 
         $decoded = $base58->decode(self::$textEncoded);
 
-        self::assertSame($decoded, self::$textClean);
+        self::assertSame($decoded, self::$textClean, 'Base58 message is not the same...');
     }
 }
