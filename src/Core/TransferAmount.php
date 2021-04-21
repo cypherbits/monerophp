@@ -20,7 +20,7 @@ class TransferAmount
     public function __construct(string $amount, string $amount_type)
     {
         $this->amount = match ($amount_type) {
-            self::$TYPE_PICONERO => ((float)$amount !== floor((float)$amount)) ? throw new \Exception("Error: Piconero type amount cannot have decimals") : (int)$amount,
+            self::$TYPE_PICONERO => (self::isValidPiconero($amount)) ? throw new \Exception("Error: Piconero type amount cannot have decimals") : (int)$amount,
             self::$TYPE_MONERO => self::transformToPiconero($amount),
             default => throw new \Exception("Error: Amount type must be TransferAmount::\$TYPE_PICONERO or TransferAmount::\$TYPE_MONERO"),
         };
@@ -48,6 +48,15 @@ class TransferAmount
     public static function transformToPiconero(string $amount) : int
     {
         return ((int) $amount > 9223372) ? throw new \Exception("Error: FIXME: too much Monero to send. Max Monero Amount is 9223372") : (int) bcmul($amount, '1000000000000');
+    }
+
+    /**
+     * Tells you if the string is a valid Piconero amount
+     * @param string $value
+     * @return bool
+     */
+    public static function isValidPiconero(string $value): bool{
+        return (float)$value !== floor((float)$value);
     }
 
 
