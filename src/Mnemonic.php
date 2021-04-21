@@ -27,7 +27,7 @@
  * This PHP code, itself being an original work, is hereby placed in the public domain.
  */
 
-namespace MoneroIntegrations\MoneroPhp\Core;
+namespace MoneroIntegrations\MoneroPhp;
 
 /**
  * A standalone class to encode, decode, and validate monero mnemonics

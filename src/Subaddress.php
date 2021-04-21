@@ -19,7 +19,7 @@
   SOFTWARE.
 */
 
-namespace MoneroIntegrations\MoneroPhp\Core;
+namespace MoneroIntegrations\MoneroPhp;
 
 use Tuupola\Base58;
 
