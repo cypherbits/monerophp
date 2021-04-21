@@ -118,7 +118,7 @@ class JsonRPCClient
         return $responseDecoded['result'] ?? throw new RuntimeException('Result response not found');
     }
 
-    public function & getResponse(string &$pRequest, string &$path): bool|string
+    public function getResponse(string $pRequest, string $path): bool|string
     {
         // do the actual connection
         $ch = curl_init();
